@@ -1,0 +1,16 @@
+<title> SimpleSocial - {{.UserName}} </title>
+<div> Welcome {{.UserName}} </div>
+<div>
+	<h3> Your Friends are: </h3>
+	<table>
+		{{with .Friends}}
+			{{range .}}
+		<tr>
+			<td>
+				<a href = "/profile/{{.UserName}}">{{.UserName}}</a>
+			</td>
+		</tr>
+			{{end}}
+		{{end}}
+	</table>
+</div>
