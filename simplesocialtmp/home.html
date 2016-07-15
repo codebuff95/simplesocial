@@ -1,0 +1,64 @@
+<html>
+	{{with .RequestingUser}}
+	<head>
+		<title>{{.Firstname}} {{.Lastname}} - Home - SimpleSocial </title>
+	</head>
+	<body>
+		<h1> {{.Firstname}} {{.Lastname}} </h3>
+		<h2> {{.Email}} </h2>
+		<h3> {{.Registeredon}} </h3>
+	</body>
+	{{end}}
+	<p>
+		{{if not .ActiveFriends}}
+			You have no active friends.
+		{{else}}
+			Your active friends are:<br>
+		<table>
+			<tr>
+				<td>
+					Friend User Id
+				</td>
+			</tr>
+			{{range .ActiveFriends}}
+				<tr>
+					<td>
+						<a href = "/profile/{{.}}">{{.}}</a>
+					</td>
+				</tr>
+			{{end}}
+		</table>
+		{{end}}
+	</p>
+	<p>
+		{{if not .ReceivedPendingFriends}}
+			You have no received pending friends.
+		{{else}}
+			Your received pending friend requests are:<br>
+		<table>
+			<tr>
+				<td>
+					Friend User Id
+				</td>
+				<td>
+					Accept Request
+				</td>
+			</tr>
+			{{range .ReceivedPendingFriends}}
+				<tr>
+					<td>
+						<a href = "/profile/{{.}}">{{.}}</a>
+					</td>
+					<td>
+						<form method="POST" action="/acceptfriend">
+							<input type="hidden" name="targetuserid" value="{{.}}">
+							<input type = "hidden" name = "formsid" value = "{{$.FormSid}}">
+							<input type = "submit" name = "submit" value = "Accept">
+						</form>
+					</td>
+				</tr>
+			{{end}}
+		</table>
+		{{end}}
+	</p>
+</html>

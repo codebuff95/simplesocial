@@ -49,7 +49,7 @@ func ProfileHandler(w http.ResponseWriter, r *http.Request){
 		log.Println("Friendship exists between the users, with status = ",myFriendship.Status)
 		targetUserProfile.MyFriendship = *myFriendship
 	}
-	targetUserProfile.ActiveFriends = friend.GetActiveFriends(targetUserId)
+	targetUserProfile.ActiveFriends = friend.GetFriends(targetUserId,friend.ACTIVE)
 	t,err := template.ParseFiles("simplesocialtmp/profile.html")
 	if err != nil{
 		log.Println("Problem parsing profile.html")
