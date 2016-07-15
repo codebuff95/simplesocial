@@ -11,7 +11,7 @@ import(
 	"simplesocial/handler/profile"
 	"simplesocial/handler/register"
 	"simplesocial/friend"
-	//"simplesocial/user"
+	"simplesocial/user"
 	"simplesocial/databases"
 	"simplesocial/sessions"
 )
@@ -32,6 +32,7 @@ func main(){
 	sessions.GlobalSM["formsm"] = &sessions.SessionManager{Db : databases.GlobalDBM["mydb"], TableName : "formsession"}
 	http.HandleFunc("/home",home.HomeHandler)
 	http.HandleFunc("/login",login.LoginHandler)
+	http.HandleFunc("/logout",user.LogoutHandler)
 	http.HandleFunc("/register",register.RegisterHandler)
 	http.HandleFunc("/profile/",profile.ProfileHandler)
 	http.HandleFunc("/removefriend",friend.RemoveFriendHandler)

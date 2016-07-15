@@ -63,3 +63,25 @@ func GetUser(targetuserid string) *User{
 	log.Println("Success getting target userid",targetuserid,", Returning User.")
 	return &targetUser
 }
+
+func LogoutHandler(w http.ResponseWriter, r *http.Request){
+	log.Println("Logout Handler")
+	requestingUserId := Authenticate(r)
+	if requestingUserId == ""{
+		log.Println("Request Session UserId not authentic. No need to logout. Redirecting to login page.")
+		http.Redirect(w,r, "/login",http.StatusSeeOther)
+		return
+	}
+	log.Println("Request Session UserId is authentic. Logging out.")
+	myCookie,err := r.Cookie("usersid")
+	if err != nil{
+		log.Println("UserSid cookie not set on client. Redirect to loginpage.")
+		http.Redirect(w,r, "/login",http.StatusSeeOther)
+		return
+	}
+	userSid := myCookie.Value
+	sessionsDeleted := sessions.GlobalSM["usersm"].DeleteSession(userSid)
+	log.Println(sessionsDeleted,"sessions deleted. Redirecting to login page.")
+	http.Redirect(w,r, "/login",http.StatusSeeOther)
+	return
+}

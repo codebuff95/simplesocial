@@ -5,7 +5,7 @@ Basic social networking model created in Golang.
 
 -> Download directory to '$GOPATH/src'
 
--> Create link of folder "simplesocialtmp" in directory '$GOPATH/bin'
+-> Create link of folder "$GOPATH/src/simplesocial/simplesocialtmp" in directory '$GOPATH/bin'
 
 -> Rename link "simplesocialtmp"
 
