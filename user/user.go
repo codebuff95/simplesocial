@@ -16,12 +16,15 @@ type User struct{
 	Photoid string
 	Registeredon string
 }
-func Authenticate(r *http.Request) bool{ //Authenticate UserSID field of received request. NOTE: r should be parsed for forms.
+
+//Authenticate authenticates UserSID field of received request. NOTE: r should be parsed for forms.
+// returns requesting UserId (empty string if UserSID is not valid).
+func Authenticate(r *http.Request) string{
 	log.Println("Authenticating User SID on received request.")
 	userCookie,err := r.Cookie("usersid")
 	if err != nil{ //usersid cookie not set on client.
 		log.Println("User SID authentication failed")
-		return false
+		return ""
 	}
 	userSid := userCookie.Value //Authenticate user by its usersid field.
 	return sessions.GlobalSM["usersm"].Authenticate(userSid)

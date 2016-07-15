@@ -24,7 +24,7 @@ func DisplayLoginPage(w http.ResponseWriter, r *http.Request){
 
 func LoginHandler(w http.ResponseWriter, r *http.Request){
 	userIsAuthentic := user.Authenticate(r)
-	if userIsAuthentic{
+	if userIsAuthentic != ""{
 		//redirect to homepage.
 		log.Println("Request user session is authentic. Redirecting to homepage.")
 		http.Redirect(w,r, "/home",http.StatusSeeOther)
@@ -36,7 +36,7 @@ func LoginHandler(w http.ResponseWriter, r *http.Request){
 	}else{ // Method == POST
 		r.ParseForm()
 		formIsAuthentic := form.Authenticate(r)
-		if formIsAuthentic{
+		if formIsAuthentic != ""{
 			//Authenticate User Begin.
 			userSession := user.AuthenticateLoginAttempt(r)
 			if userSession == nil || userSession.Status != sessions.ACTIVE{ //Invalid login attempt.

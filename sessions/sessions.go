@@ -36,8 +36,9 @@ func GenerateUniqueSid() string{
 	}
 	return string(b)
 }
-
-func (sm *SessionManager) Authenticate(sid string) bool{
+// Authenticate authenticates the sid of SessionManager sm, and returns the corresponding Rid if valid session, else
+// returns empty string.
+func (sm *SessionManager) Authenticate(sid string) string{
 	mySession := sm.GetSession(sid)
 	if mySession != nil{
 		log.Println("session status is",mySession.Status)
@@ -45,10 +46,10 @@ func (sm *SessionManager) Authenticate(sid string) bool{
 		log.Println("session returned is nil.")
 	}
 	if mySession != nil && mySession.Status == ACTIVE{
-		return true
+		return mySession.Rid
 	}
 	log.Println("Invalid Sid:",sid)
-	return false
+	return ""
 }
 
 func (sm *SessionManager) GetSession(sid string) *Session{

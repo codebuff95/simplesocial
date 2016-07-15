@@ -1,16 +1,52 @@
-<title> SimpleSocial - {{.UserName}} </title>
-<div> Welcome {{.UserName}} </div>
-<div>
-	<h3> Your Friends are: </h3>
+<html>
+	{{with .TargetUser}}
+	<head>
+		<title>{{.Firstname}} {{.Lastname}} - SimpleSocial </title>
+	</head>
+	<body>
+		<h1> {{.Firstname}} {{.Lastname}} </h3>
+		<h2> {{.Email}} </h2>
+		<h3> {{.Registeredon}} </h3>
+	</body>
+	{{end}}
+	{{if eq .MyFriendship.Status 2}}
+		This user is friends with you.
+		<form method="POST" action="/removefriend">
+			<input type="hidden" name="targetuserid" value="{{.TargetUser.Userid}}">
+			<input type = "hidden" name = "formsid" value = "{{.FormSid}}">
+			<input type = "submit" name = "submit" value = "Remove Friend">
+		</form>
+	{{else if eq .MyFriendship.Status 1}}
+		Pending Friendship Confirmation.
+		<form method="POST" action="/removefriend">
+			<input type="hidden" name="targetuserid" value="{{.TargetUser.Userid}}">
+			<input type = "hidden" name = "formsid" value = "{{.FormSid}}">
+			<input type = "submit" name = "submit" value = "Remove Pending Request">
+		</form>
+	{{else if eq .MyFriendship.Status 3}}
+		This user is not friends with you.
+		<form method="POST" action="/addfriend">
+			<input type="hidden" name="targetuserid" value="{{.TargetUser.Userid}}">
+			<input type = "hidden" name = "formsid" value = "{{.FormSid}}">
+			<input type = "submit" name = "submit" value = "Add Friend">
+		</form>
+	{{end}}
+	{{if not .ActiveFriends}}
+		This user has no active friends.
+	{{else}}
 	<table>
-		{{with .Friends}}
-			{{range .}}
 		<tr>
 			<td>
-				<a href = "/profile/{{.UserName}}">{{.UserName}}</a>
+				Friend User Id
 			</td>
 		</tr>
-			{{end}}
+		{{range .ActiveFriends}}
+			<tr>
+				<td>
+					<a href = "/profile/{{.}}">{{.}}</a>
+				</td>
+			</tr>
 		{{end}}
 	</table>
-</div>
+	{{end}}
+</html>

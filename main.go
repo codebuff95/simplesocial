@@ -9,6 +9,7 @@ import(
 	"simplesocial/handler/login"
 	"simplesocial/handler/profile"
 	"simplesocial/handler/register"
+	"simplesocial/friend"
 	//"simplesocial/user"
 	"simplesocial/databases"
 	"simplesocial/sessions"
@@ -31,5 +32,7 @@ func main(){
 	http.HandleFunc("/login",login.LoginHandler)
 	http.HandleFunc("/register",register.RegisterHandler)
 	http.HandleFunc("/profile/",profile.ProfileHandler)
+	http.HandleFunc("/removefriend",friend.RemoveFriendHandler)
+	http.HandleFunc("/addfriend",friend.AddFriendHandler)
 	http.ListenAndServe(":8080",nil)
 }
