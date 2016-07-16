@@ -7,6 +7,7 @@
 		<h1> {{.Firstname}} {{.Lastname}} </h3>
 		<h2> {{.Email}} </h2>
 		<h3> {{.Registeredon}} </h3>
+		<h4> Userid: {{.Userid}} </h4>
 	</body>
 	{{end}}
 	{{if eq .MyFriendship.Status 2}}
@@ -34,10 +35,11 @@
 	{{if not .ActiveFriends}}
 		This user has no active friends.
 	{{else}}
+		The active friends of this user are:<br>
 	<table>
 		<tr>
 			<td>
-				Friend User Id
+				User Id
 			</td>
 		</tr>
 		{{range .ActiveFriends}}
@@ -51,5 +53,8 @@
 	{{end}}
 	<p>
 		<a href="/logout">Logout</a>
+	</p>
+	<p>
+		Take me to <a href="/home">home</a>.
 	</p>
 </html>
