@@ -1,87 +1,167 @@
 package user
 
-import(
-	"net/http"
-	"log"
-	"simplesocial/sessions"
-	"simplesocial/databases"
-	"time"
+import (
 	"database/sql"
+	"fmt"
+	"log"
+	"net/http"
+	"simplesocial/databases"
+	"simplesocial/sessions"
+	"time"
 )
-type User struct{
-	Userid string
-	Firstname string
-	Lastname string
-	Email string
-	Photoid string
+
+type User struct {
+	Userid       string
+	Firstname    string
+	Lastname     string
+	Email        string
+	Photoid      string
 	Registeredon string
+}
+
+const (
+	BADPASSWORD   = 1
+	BADEMAIL      = 2
+	BADFORMSID    = 3
+	BADNAME       = 4
+	BADADDATTEMPT = 5
+)
+
+type RegisterError int
+
+func (re RegisterError) Error() string {
+	if re == (BADEMAIL) {
+		return fmt.Sprintf("Problem with entered email.")
+	}
+	if re == RegisterError(BADPASSWORD) {
+		return fmt.Sprintf("Problem with entered password.")
+	}
+	if re == RegisterError(BADFORMSID) {
+		return fmt.Sprintf("Problem with submitted form SID.")
+	}
+	return "No Errors."
 }
 
 //Authenticate authenticates UserSID field of received request. NOTE: r should be parsed for forms.
 // returns requesting UserId (empty string if UserSID is not valid).
-func Authenticate(r *http.Request) string{
+func Authenticate(r *http.Request) string {
 	log.Println("Authenticating User SID on received request.")
-	userCookie,err := r.Cookie("usersid")
-	if err != nil{ //usersid cookie not set on client.
+	userCookie, err := r.Cookie("usersid")
+	if err != nil { //usersid cookie not set on client.
 		log.Println("User SID authentication failed")
 		return ""
 	}
 	userSid := userCookie.Value //Authenticate user by its usersid field.
 	return sessions.GlobalSM["usersm"].Authenticate(userSid)
 }
-func AuthenticateLoginAttempt(r *http.Request) *sessions.Session{ // NOTE: r should be parsed for forms.
+
+func AuthenticateLoginAttempt(r *http.Request) *sessions.Session { // NOTE: r should be parsed for forms.
 	var userid string
 	log.Println("Authenticating Login credentials.")
 	attemptEmail := r.Form.Get("email")
 	attemptPassword := r.Form.Get("password")
-	log.Println("Attempt email :",attemptEmail,"Attempt Password:",attemptPassword)
-	row := databases.GlobalDBM["mydb"].Con.QueryRow("SELECT userid FROM user WHERE email = '"+attemptEmail+"' AND password = '"+attemptPassword+"'")
+	log.Println("Attempt email :", attemptEmail, "Attempt Password:", attemptPassword)
+	row := databases.GlobalDBM["mydb"].Con.QueryRow("SELECT userid FROM user WHERE email = '" + attemptEmail + "' AND password = '" + attemptPassword + "'")
 	err := row.Scan(&userid)
-	if err != nil{ // User does not exist.
+	if err != nil { // User does not exist.
 		log.Println("User authentication failed.")
 		return &sessions.Session{Status: sessions.DELETED}
-	}else{ //User exists.
+	} else { //User exists.
 		log.Println("User authentication successful. Creating new Session.")
-		return sessions.GlobalSM["usersm"].SetSession(userid,time.Hour*24*3) // Session lives in DB for 3 days.
+		return sessions.GlobalSM["usersm"].SetSession(userid, time.Hour*24*3) // Session lives in DB for 3 days.
 	}
 }
 
-func GetUser(targetuserid string) *User{
+func GetUser(targetuserid string) *User {
 	targetUser := User{}
-	log.Println("Getting requested userid",targetuserid)
-	row := databases.GlobalDBM["mydb"].Con.QueryRow("SELECT CONVERT(userid,CHAR(11)),firstname,lastname,CONVERT(photoid,CHAR(11)),email,registeredon FROM user WHERE userid = '"+targetuserid+"'")
+	log.Println("Getting requested userid", targetuserid)
+	row := databases.GlobalDBM["mydb"].Con.QueryRow("SELECT CONVERT(userid,CHAR(11)),firstname,lastname,CONVERT(photoid,CHAR(11)),email,registeredon FROM user WHERE userid = '" + targetuserid + "'")
 	var photoid sql.NullString //handling case when photoid is null.
-	err := row.Scan(&targetUser.Userid,&targetUser.Firstname,&targetUser.Lastname,&photoid,&targetUser.Email, &targetUser.Registeredon)
-	if photoid.Valid{ //if photoid is not null
+	err := row.Scan(&targetUser.Userid, &targetUser.Firstname, &targetUser.Lastname, &photoid, &targetUser.Email, &targetUser.Registeredon)
+	if photoid.Valid { //if photoid is not null
 		targetUser.Photoid = photoid.String
 	}
-	if err != nil{
-		log.Println("Could not find target userid",targetuserid,", Returning nil User.")
+	if err != nil {
+		log.Println("Could not find target userid", targetuserid, ", Returning nil User.")
 		log.Println(err)
 		return nil
 	}
-	log.Println("Success getting target userid",targetuserid,", Returning User.")
+	log.Println("Success getting target userid", targetuserid, ", Returning User.")
 	return &targetUser
 }
 
-func LogoutHandler(w http.ResponseWriter, r *http.Request){
+func LogoutHandler(w http.ResponseWriter, r *http.Request) {
 	log.Println("Logout Handler")
 	requestingUserId := Authenticate(r)
-	if requestingUserId == ""{
+	if requestingUserId == "" {
 		log.Println("Request Session UserId not authentic. No need to logout. Redirecting to login page.")
-		http.Redirect(w,r, "/login",http.StatusSeeOther)
+		http.Redirect(w, r, "/login", http.StatusSeeOther)
 		return
 	}
 	log.Println("Request Session UserId is authentic. Logging out.")
-	myCookie,err := r.Cookie("usersid")
-	if err != nil{
+	myCookie, err := r.Cookie("usersid")
+	if err != nil {
 		log.Println("UserSid cookie not set on client. Redirect to loginpage.")
-		http.Redirect(w,r, "/login",http.StatusSeeOther)
+		http.Redirect(w, r, "/login", http.StatusSeeOther)
 		return
 	}
 	userSid := myCookie.Value
 	sessionsDeleted := sessions.GlobalSM["usersm"].DeleteSession(userSid)
-	log.Println(sessionsDeleted,"sessions deleted. Redirecting to login page.")
-	http.Redirect(w,r, "/login",http.StatusSeeOther)
+	log.Println(sessionsDeleted, "sessions deleted. Redirecting to login page.")
+	http.Redirect(w, r, "/login", http.StatusSeeOther)
 	return
+}
+
+func passwordNotGood(entered string) bool {
+	if len(entered) < 6 || len(entered) > 15 {
+		return true
+	}
+	return false
+}
+
+func emailNotGood(entered string) bool {
+	//no email logic yet.
+	return false
+}
+
+func nameNotGood(entered string) bool {
+	//no name logic yet.
+	return false
+}
+
+func AuthenticateRegisterAttempt(r *http.Request) error {
+	enteredPassword := r.Form.Get("password")
+	if passwordNotGood(enteredPassword) {
+		return RegisterError(BADPASSWORD)
+	}
+	enteredEmail := r.Form.Get("email")
+	if emailNotGood(enteredEmail) {
+		return RegisterError(BADEMAIL)
+	}
+	enteredFirstName := r.Form.Get("firstname")
+	enteredLastName := r.Form.Get("lastname")
+	if nameNotGood(enteredFirstName) || nameNotGood(enteredLastName) {
+		return RegisterError(BADNAME)
+	}
+	return nil // Authentic Register Attempt.
+}
+
+//AddUser adds User into database, and returns a non-nil error if the user could not be added.
+//Else, returns a nil error.
+func AddUser(r *http.Request) error {
+	enteredPassword := r.Form.Get("password")
+	enteredEmail := r.Form.Get("email")
+	enteredFirstName := r.Form.Get("firstname")
+	enteredLastName := r.Form.Get("lastname")
+	stmt, err := databases.GlobalDBM["mydb"].Con.Prepare("INSERT INTO user SET firstname = '" + enteredFirstName + "', lastname = '" + enteredLastName + "', password = '" + enteredPassword + "', email = '" + enteredEmail + "'")
+	if err != nil {
+		log.Println(err)
+		return RegisterError(BADADDATTEMPT)
+	}
+	_, err = stmt.Exec()
+	if err != nil {
+		log.Println(err)
+		return RegisterError(BADADDATTEMPT)
+	}
+	return nil
 }
