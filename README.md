@@ -10,6 +10,7 @@ Basic social networking model created in Golang.
 -> Rename link "simplesocialtmp"
 
 **->** Create necessary databases. I will add the SQL files in upcoming commits.
+-> UPDATE: .sql file has been added in /MySQLFiles.
 
 -> *Run in terminal:*
 
