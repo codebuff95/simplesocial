@@ -1,9 +1,11 @@
 # simplesocial
-Basic social networking model created in Golang.
+Basic social networking model created in Golang, with a MySQL database.
 
 **First installation guide**
 
 -> Download directory to '$GOPATH/src'
+
+-> Download all external dependencies
 
 -> Create link of folder "$GOPATH/src/simplesocial/simplesocialtmp" in directory '$GOPATH/bin'
 
