@@ -53,9 +53,10 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 				expiry := time.Now().Add(time.Hour * 24 * 2) // Cookie is valid till 2 days.
 				if r.Form.Get("rememberme") != "" {          //rememberme selected in login form.
 					log.Println("Remember me WAS selected in form.")
-					userSidCookie.Expires = expiry
+					userSidCookie.Expires = expiry //userSidCookie is made a Persistent Cookie.
 				} else {
 					log.Println("Remember me WAS NOT selected in form.")
+					//No need to set expiry field in cookie if rememberme field was not clicked.
 				}
 				http.SetCookie(w, userSidCookie)
 				log.Println("usersid Cookie successfully set on client. Redirecting to homepage.")
