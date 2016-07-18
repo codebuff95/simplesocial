@@ -48,11 +48,13 @@ func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 		r.ParseForm()
 		formIsAuthentic := form.Authenticate(r)
 		if formIsAuthentic != "" { //if form is authentic.
-			r.ParseForm()
+			//r.ParseForm() //ParseForm already called above. No need for redundant calls.
 			myRegisterErr := user.AuthenticateRegisterAttempt(r) // returns RegisterError.
 			if myRegisterErr != nil {                            //Invalid register attempt.
 				log.Println("Invalid Register Attempt.")
 				log.Println(myRegisterErr)
+				w.Write([]byte("BAD Register Attempt. " + myRegisterErr.Error() + " Try again."))
+				return
 			} else { //Valid register attempt.
 				log.Println("Valid Register Attempt. Adding User to Database")
 				myRegisterErr = user.AddUser(r)
