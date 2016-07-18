@@ -10,6 +10,7 @@ import (
 	"simplesocial/handler/login"
 	"simplesocial/handler/profile"
 	"simplesocial/handler/register"
+	"simplesocial/handler/welcome"
 	"simplesocial/sessions"
 	"simplesocial/user"
 	"time"
@@ -33,6 +34,7 @@ func main() {
 	//Initialise User Session Manager in sessions.(GLobal Session Managers Map) using mydb Database and HARDCODED Tablename.
 	sessions.GlobalSM["usersm"] = &sessions.SessionManager{Db: databases.GlobalDBM["mydb"], TableName: "usersession"}
 	sessions.GlobalSM["formsm"] = &sessions.SessionManager{Db: databases.GlobalDBM["mydb"], TableName: "formsession"}
+	http.HandleFunc("/", welcome.WelcomeHandler)
 	http.HandleFunc("/home", home.HomeHandler)
 	http.HandleFunc("/login", login.LoginHandler)
 	http.HandleFunc("/logout", user.LogoutHandler)
