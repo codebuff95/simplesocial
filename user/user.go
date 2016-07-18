@@ -1,11 +1,14 @@
 package user
 
 import (
+	"bytes"
 	"database/sql"
 	"fmt"
+	"html/template"
 	"log"
 	"net/http"
 	"simplesocial/databases"
+	"simplesocial/email"
 	"simplesocial/sessions"
 	"time"
 )
@@ -30,6 +33,9 @@ const (
 type RegisterError int
 
 func (re RegisterError) Error() string {
+	if re == (BADNAME) {
+		return fmt.Sprintf("Problem with entered name.")
+	}
 	if re == (BADEMAIL) {
 		return fmt.Sprintf("Problem with entered email.")
 	}
@@ -39,7 +45,7 @@ func (re RegisterError) Error() string {
 	if re == RegisterError(BADFORMSID) {
 		return fmt.Sprintf("Problem with submitted form SID.")
 	}
-	return "No Errors."
+	return "Miscellaneous Error."
 }
 
 //Authenticate authenticates UserSID field of received request. NOTE: r should be parsed for forms.
@@ -55,21 +61,27 @@ func Authenticate(r *http.Request) string {
 	return sessions.GlobalSM["usersm"].Authenticate(userSid)
 }
 
-func AuthenticateLoginAttempt(r *http.Request) *sessions.Session { // NOTE: r should be parsed for forms.
+//AuthenticateLoginAttempt authenticates "email" and "password" fields in the form in incoming
+// request 'r'. If authentic, that is, the entered details exist in the database, Login attempt
+// is authentic, and a new User Session is created in the database, and returned. Else,
+// an unauthentic login attempt triggers return of non-ACTIVE session.
+// NOTE 1: r should be parsed for forms.
+// NOTE 2: fetching form entries are secured by 'HTML escaping' special characters.
+func AuthenticateLoginAttempt(r *http.Request) *sessions.Session {
 	var userid string
 	log.Println("Authenticating Login credentials.")
-	attemptEmail := r.Form.Get("email")
-	attemptPassword := r.Form.Get("password")
+	attemptEmail := template.HTMLEscapeString(r.Form.Get("email"))       //Escape special characters for security.
+	attemptPassword := template.HTMLEscapeString(r.Form.Get("password")) //Escape special characters for security.
 	log.Println("Attempt email :", attemptEmail, "Attempt Password:", attemptPassword)
 	row := databases.GlobalDBM["mydb"].Con.QueryRow("SELECT userid FROM user WHERE email = '" + attemptEmail + "' AND password = '" + attemptPassword + "'")
 	err := row.Scan(&userid)
 	if err != nil { // User does not exist.
 		log.Println("User authentication failed.")
 		return &sessions.Session{Status: sessions.DELETED}
-	} else { //User exists.
-		log.Println("User authentication successful. Creating new Session.")
-		return sessions.GlobalSM["usersm"].SetSession(userid, time.Hour*24*3) // Session lives in DB for 3 days.
 	}
+	//User exists.
+	log.Println("User authentication successful. Creating new Session.")
+	return sessions.GlobalSM["usersm"].SetSession(userid, time.Hour*24*3) // Session lives in DB for 3 days.
 }
 
 func GetUser(targetuserid string) *User {
@@ -130,16 +142,16 @@ func nameNotGood(entered string) bool {
 }
 
 func AuthenticateRegisterAttempt(r *http.Request) error {
-	enteredPassword := r.Form.Get("password")
+	enteredPassword := template.HTMLEscapeString(r.Form.Get("password"))
 	if passwordNotGood(enteredPassword) {
 		return RegisterError(BADPASSWORD)
 	}
-	enteredEmail := r.Form.Get("email")
+	enteredEmail := template.HTMLEscapeString(r.Form.Get("email"))
 	if emailNotGood(enteredEmail) {
 		return RegisterError(BADEMAIL)
 	}
-	enteredFirstName := r.Form.Get("firstname")
-	enteredLastName := r.Form.Get("lastname")
+	enteredFirstName := template.HTMLEscapeString(r.Form.Get("firstname"))
+	enteredLastName := template.HTMLEscapeString(r.Form.Get("lastname"))
 	if nameNotGood(enteredFirstName) || nameNotGood(enteredLastName) {
 		return RegisterError(BADNAME)
 	}
@@ -148,20 +160,29 @@ func AuthenticateRegisterAttempt(r *http.Request) error {
 
 //AddUser adds User into database, and returns a non-nil error if the user could not be added.
 //Else, returns a nil error.
-func AddUser(r *http.Request) error {
-	enteredPassword := r.Form.Get("password")
-	enteredEmail := r.Form.Get("email")
-	enteredFirstName := r.Form.Get("firstname")
-	enteredLastName := r.Form.Get("lastname")
+func AddUser(r *http.Request) (*User, error) {
+	enteredPassword := template.HTMLEscapeString(r.Form.Get("password"))
+	enteredEmail := template.HTMLEscapeString(r.Form.Get("email"))
+	enteredFirstName := template.HTMLEscapeString(r.Form.Get("firstname"))
+	enteredLastName := template.HTMLEscapeString(r.Form.Get("lastname"))
 	stmt, err := databases.GlobalDBM["mydb"].Con.Prepare("INSERT INTO user SET firstname = '" + enteredFirstName + "', lastname = '" + enteredLastName + "', password = '" + enteredPassword + "', email = '" + enteredEmail + "'")
 	if err != nil {
 		log.Println(err)
-		return RegisterError(BADADDATTEMPT)
+		return nil, RegisterError(BADADDATTEMPT)
 	}
 	_, err = stmt.Exec()
 	if err != nil {
 		log.Println(err)
-		return RegisterError(BADADDATTEMPT)
+		return nil, RegisterError(BADADDATTEMPT)
 	}
-	return nil
+	return &User{Firstname: enteredFirstName, Lastname: enteredLastName, Email: enteredEmail}, nil
+}
+
+func WelcomeEmail(myUser *User) error {
+	var doc bytes.Buffer
+	err := email.EmailTemplate.Execute(&doc, myUser)
+	if err != nil {
+		return err
+	}
+	return email.GlobalEM.SendMyEmail(doc.Bytes(), myUser.Email)
 }

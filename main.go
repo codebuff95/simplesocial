@@ -5,6 +5,7 @@ import (
 	"math/rand"
 	"net/http"
 	"simplesocial/databases"
+	"simplesocial/email"
 	"simplesocial/friend"
 	"simplesocial/handler/home"
 	"simplesocial/handler/login"
@@ -34,6 +35,14 @@ func main() {
 	//Initialise User Session Manager in sessions.(GLobal Session Managers Map) using mydb Database and HARDCODED Tablename.
 	sessions.GlobalSM["usersm"] = &sessions.SessionManager{Db: databases.GlobalDBM["mydb"], TableName: "usersession"}
 	sessions.GlobalSM["formsm"] = &sessions.SessionManager{Db: databases.GlobalDBM["mydb"], TableName: "formsession"}
+
+	//Initialise Global Email Manager.
+	email.InitGlobalEM()
+	//Initialise Welcome Email Template.
+	err = email.InitWelcomeEmailTemplate()
+	if err != nil {
+		log.Fatal("Could not initialise Welcome Email Template.")
+	}
 	http.HandleFunc("/", welcome.WelcomeHandler)
 	http.HandleFunc("/home", home.HomeHandler)
 	http.HandleFunc("/login", login.LoginHandler)

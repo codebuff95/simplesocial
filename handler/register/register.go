@@ -57,11 +57,20 @@ func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 				return
 			} else { //Valid register attempt.
 				log.Println("Valid Register Attempt. Adding User to Database")
-				myRegisterErr = user.AddUser(r)
+				myUser, myRegisterErr := user.AddUser(r)
 				if myRegisterErr != nil {
 					log.Println("Could not add user to database.")
+					w.Write([]byte("Could not create account. Please try again."))
+					return
 				} else {
 					log.Println("Success adding user to database.")
+					//Send Welcome Email to user.
+					err := user.WelcomeEmail(myUser)
+					if err != nil {
+						log.Println("Could not send Welcome Email to new user", myUser, err)
+					} else {
+						log.Println("WelcomeEmail sent Successfully to user", myUser)
+					}
 				}
 			}
 			t, err := template.ParseFiles("simplesocialtmp/registerresult.html")
