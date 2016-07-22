@@ -7,6 +7,7 @@ import (
 	"simplesocial/databases"
 	"simplesocial/email"
 	"simplesocial/friend"
+	"simplesocial/handler/forgotpassword"
 	"simplesocial/handler/home"
 	"simplesocial/handler/login"
 	"simplesocial/handler/profile"
@@ -38,8 +39,8 @@ func main() {
 
 	//Initialise Global Email Manager.
 	email.InitGlobalEM()
-	//Initialise Welcome Email Template.
-	err = email.InitWelcomeEmailTemplate()
+	//Initialise Email Templates (WelcomeEmailTemplate,ResetPasswordTemplate).
+	err = email.InitEmailTemplates()
 	if err != nil {
 		log.Fatal("Could not initialise Welcome Email Template.")
 	}
@@ -100,6 +101,12 @@ func MyHandler(w http.ResponseWriter, r *http.Request) {
 		friend.AddFriendHandler(w, r)
 		return
 	}
+	if requestPath == "/forgotpassword" {
+		log.Println("###Forgot Password Handler###")
+		forgotpassword.ForgotPasswordHandler(w, r)
+		return
+	}
+	log.Println("Request with path", r.URL.Path, "is triggering welcome handler.")
 	log.Println("###Welcome Handler###")
 	welcome.WelcomeHandler(w, r)
 	return

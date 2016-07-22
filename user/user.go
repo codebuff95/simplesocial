@@ -22,6 +22,11 @@ type User struct {
 	Registeredon string
 }
 
+type ProtectedUser struct {
+	User
+	Password string
+}
+
 const (
 	BADPASSWORD   = 1
 	BADEMAIL      = 2
@@ -99,6 +104,24 @@ func GetUser(targetuserid string) *User {
 		return nil
 	}
 	log.Println("Success getting target userid", targetuserid, ", Returning User.")
+	return &targetUser
+}
+
+func GetUserUsingEmail(targetemail string) *User {
+	targetUser := User{}
+	log.Println("Getting requested user with emailid: ", targetemail)
+	row := databases.GlobalDBM["mydb"].Con.QueryRow("SELECT CONVERT(userid,CHAR(11)),firstname,lastname,CONVERT(photoid,CHAR(11)),email,registeredon FROM user WHERE email = '" + targetemail + "'")
+	var photoid sql.NullString //handling case when photoid is null.
+	err := row.Scan(&targetUser.Userid, &targetUser.Firstname, &targetUser.Lastname, &photoid, &targetUser.Email, &targetUser.Registeredon)
+	if photoid.Valid { //if photoid is not null
+		targetUser.Photoid = photoid.String
+	}
+	if err != nil {
+		log.Println("Could not find target user with email", targetemail, ", Returning nil User.")
+		log.Println(err)
+		return nil
+	}
+	log.Println("Success getting target user with email", targetemail, ", Returning User.")
 	return &targetUser
 }
 
@@ -180,9 +203,51 @@ func AddUser(r *http.Request) (*User, error) {
 
 func WelcomeEmail(myUser *User) error {
 	var doc bytes.Buffer
-	err := email.EmailTemplate.Execute(&doc, myUser)
+	err := email.WelcomeEmailTemplate.Execute(&doc, myUser)
 	if err != nil {
 		return err
 	}
 	return email.GlobalEM.SendMyEmail(doc.Bytes(), myUser.Email)
+}
+
+func ResetPasswordEmail(MyUser *User, newPassword string) error {
+	var doc bytes.Buffer
+	myProtectedUser := ProtectedUser{*MyUser, newPassword}
+	err := email.ResetPasswordEmailTemplate.Execute(&doc, myProtectedUser)
+	if err != nil {
+		return err
+	}
+	return email.GlobalEM.SendMyEmail(doc.Bytes(), MyUser.Email)
+}
+
+func AuthenticateForgotPasswordAttempt(r *http.Request) *User {
+	enteredEmail := template.HTMLEscapeString(r.Form.Get("email"))
+	if emailNotGood(enteredEmail) {
+		return nil
+	}
+	return GetUserUsingEmail(enteredEmail)
+}
+
+func ResetPassword(myUser *User, suggestedPassword string) string {
+	log.Println("Resetting password for user with userid:", myUser.Userid)
+	newPassword := suggestedPassword
+	stmt, err := databases.GlobalDBM["mydb"].Con.Prepare("UPDATE user SET password='" + newPassword + "' where userid='" + myUser.Userid + "'")
+	if err != nil {
+		log.Println("Error Preparing SQL Query:", err)
+		return ""
+	}
+
+	res, err := stmt.Exec()
+	if err != nil {
+		log.Println("Error executing SQL Query:", err)
+		return ""
+	}
+
+	affect, err := res.RowsAffected()
+	if affect == 0 {
+		log.Println("No rows were effected:")
+		return ""
+	}
+	log.Println(affect, "rows were effected.")
+	return newPassword
 }

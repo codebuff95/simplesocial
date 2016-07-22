@@ -7,7 +7,8 @@ import (
 	"text/template"
 )
 
-var EmailTemplate *template.Template
+var WelcomeEmailTemplate *template.Template
+var ResetPasswordEmailTemplate *template.Template
 var GlobalEM *EmailManager
 
 type EmailManager struct {
@@ -28,10 +29,14 @@ func InitGlobalEM() {
 		GlobalEM.EmailServer,
 	)
 }
-func InitWelcomeEmailTemplate() error {
-	log.Println("Initialising Welcome Email Template")
+func InitEmailTemplates() error {
+	log.Println("Initialising Email Templates")
 	var err error
-	EmailTemplate, err = template.ParseFiles("simplesocialtmp/welcomemail")
+	WelcomeEmailTemplate, err = template.ParseFiles("simplesocialtmp/welcomemail")
+	if err != nil {
+		return err
+	}
+	ResetPasswordEmailTemplate, err = template.ParseFiles("simplesocialtmp/resetpassword")
 	return err
 }
 
