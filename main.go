@@ -56,10 +56,12 @@ func main() {
 		http.HandleFunc("/addfriend", friend.AddFriendHandler)
 	*/
 	http.HandleFunc("/", MyHandler)
+	http.HandleFunc("/profile/", profile.ProfileHandler)
 	http.ListenAndServe(":8080", nil)
 }
 
 func MyHandler(w http.ResponseWriter, r *http.Request) {
+	log.Println("***Entering MyHandler***")
 	requestPath := r.URL.Path
 	if requestPath == "/home" {
 		log.Println("###Home Handler###")
@@ -81,11 +83,11 @@ func MyHandler(w http.ResponseWriter, r *http.Request) {
 		register.RegisterHandler(w, r)
 		return
 	}
-	if requestPath == "/profile/" {
+	/*if requestPath == "/profile/" {
 		log.Println("###Profile Handler###")
 		profile.ProfileHandler(w, r)
 		return
-	}
+	}*/
 	if requestPath == "/removefriend" {
 		log.Println("###RemoveFriend Handler###")
 		friend.RemoveFriendHandler(w, r)
