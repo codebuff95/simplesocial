@@ -8,9 +8,10 @@ expires.
 */
 import (
 	"log"
-	"math/rand" //preferable replacement: "crypto/rand".
+	"crypto/rand" //preferable replacement: "crypto/rand".
 	"simplesocial/databases"
 	"strings"
+	"encoding/base64"
 	"time"
 )
 
@@ -44,11 +45,10 @@ func InitGlobalSM() {
 }
 
 func GenerateUniqueSid() string {
-	b := make([]rune, SIDLEN)
-	for i := range b {
-		b[i] = letters[rand.Intn(len(letters))]
-	}
-	return string(b)
+	sid := make([]byte,SIDLEN)
+  rand.Read(sid)
+  finalsid := base64.URLEncoding.EncodeToString(sid)
+  return string(finalsid[0:SIDLEN])
 }
 
 // Authenticate authenticates the sid of SessionManager sm, and returns the corresponding Rid if valid session, else

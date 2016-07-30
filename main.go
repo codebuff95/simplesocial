@@ -23,7 +23,7 @@ func main() {
 	rand.Seed(time.Now().UTC().UnixNano())
 	databases.InitGlobalDBM()
 	sessions.InitGlobalSM()
-	databases.GlobalDBM["mydb"] = &databases.DBManager{Name: "mysql", Database: "test", User: "root", Password: "123456"}
+	databases.GlobalDBM["mydb"] = &databases.DBManager{Name: "mysql", Database: "test", User: "root", Password: "tanmay123"}
 	err = databases.GlobalDBM["mydb"].Open()
 	if err != nil {
 		log.Fatal(err)
